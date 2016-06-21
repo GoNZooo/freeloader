@@ -4,18 +4,11 @@
 
 -export([download/4, fetch/2, fetch/1]).
 
--type optlist() :: [option()].
-
--type option() :: {url, Url :: string() | binary()} |
-                  {type, Type :: string | binary} |
-                  {parse_fun, F :: fun((string() | binary()) -> any())} |
-                  {timeout, Timeout :: non_neg_integer()}.
-
 -callback start_link(Url :: string() | binary(),
-                     Opts :: optlist()) -> {ok, pid()}.
+                     Opts :: map()) -> {ok, pid()}.
 
 -callback init(Url :: string(),
-               Opts :: optlist()) -> {ok, Options :: optlist()}.
+               Opts :: map()) -> {ok, Options :: map()}.
 
 start_link(Mod, Args) ->
     {ok, proc_lib:spawn_link(freeloader_downloader, init, [Mod, Args])}.
@@ -48,10 +41,26 @@ fetch(Pid, Timeout) ->
 
 init(Mod, Args) ->
     {ok, Options} = apply(Mod, init, Args),
-    true = proplists:is_defined(url, Options),
-    Url = proplists:get_value(url, Options),
-    Type = proplists:get_value(type, Options, string),
-    ParseFun = proplists:get_value(parse_fun, Options,
-                                   fun(Data) -> Data end),
-    Timeout = proplists:get_value(timeout, Options, timer:seconds(15)),
+    Url = get_url(Options),
+    Type = get_type(Options),
+    ParseFun = get_parse_fun(Options),
+    Timeout = get_timeout(Options),
     download(Url, Type, ParseFun, Timeout).
+
+get_url(#{url := Url}) ->
+    Url.
+
+get_type(#{type := Type}) ->
+    Type;
+get_type(_) ->
+    string.
+
+get_parse_fun(#{parse_fun := ParseFun}) ->
+    ParseFun;
+get_parse_fun(_) ->
+    fun(Data) -> Data end.
+
+get_timeout(#{timeout := Timeout}) ->
+    Timeout;
+get_timeout(_) ->
+    timer:seconds(15).
