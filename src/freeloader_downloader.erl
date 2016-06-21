@@ -2,7 +2,6 @@
 
 %% API exports
 -export([start_link/2,
-         download/4,
          fetch/2, fetch/1]).
 
 %% Internal export
@@ -23,18 +22,6 @@
 start_link(Mod, Args) ->
     {ok, proc_lib:spawn_link(freeloader_downloader, init, [Mod, Args])}.
     
-
-download(Url, Type, ParseFun, Timeout) ->
-    {ok, {_, _, Result}} = httpc:request(get, {Url, []},
-                                         [], [{body_format, Type}]),
-    ParsedResult = ParseFun(Result),
-
-    receive
-        {fetch, From, Ref} ->
-            From ! {ok, Ref, ParsedResult}
-    after Timeout ->
-            exit(timeout)
-    end.
 
 fetch(Pid) ->
     fetch(Pid, timer:seconds(5)).
@@ -59,7 +46,20 @@ init(Mod, Args) ->
     Type = get_type(Options),
     ParseFun = get_parse_fun(Options),
     Timeout = get_timeout(Options),
-    download(Url, Type, ParseFun, Timeout).
+    HTTPOpts = get_http_options(Options),
+    download(Url, Type, ParseFun, Timeout, HTTPOpts).
+
+download(Url, Type, ParseFun, Timeout, HTTPOpts) ->
+    {ok, {_, _, Result}} = httpc:request(get, {Url, []},
+                                         HTTPOpts, [{body_format, Type}]),
+    ParsedResult = ParseFun(Result),
+
+    receive
+        {fetch, From, Ref} ->
+            From ! {ok, Ref, ParsedResult}
+    after Timeout ->
+            exit(timeout)
+    end.
 
 get_url(#{url := Url}) ->
     Url.
@@ -78,3 +78,8 @@ get_timeout(#{timeout := Timeout}) ->
     Timeout;
 get_timeout(_) ->
     timer:seconds(15).
+
+get_http_options(#{http_opts := HTTPOpts}) ->
+    HTTPOpts;
+get_http_options(_) ->
+    [].
