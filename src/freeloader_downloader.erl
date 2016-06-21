@@ -1,14 +1,24 @@
 -module(freeloader_downloader).
 
--export([start_link/2, init/2]).
+%% API exports
+-export([start_link/2,
+         download/4,
+         fetch/2, fetch/1]).
 
--export([download/4, fetch/2, fetch/1]).
+%% Internal export
+-export([init/2]).
 
+
+%% Callbacks
 -callback start_link(Url :: string() | binary(),
                      Opts :: map()) -> {ok, pid()}.
 
 -callback init(Url :: string(),
                Opts :: map()) -> {ok, Options :: map()}.
+
+%% ==== %%
+%% API  %%
+%% ==== %%
 
 start_link(Mod, Args) ->
     {ok, proc_lib:spawn_link(freeloader_downloader, init, [Mod, Args])}.
@@ -38,6 +48,10 @@ fetch(Pid, Timeout) ->
     after Timeout ->
             {error, timeout}
     end.
+
+%% ========= %%
+%% Internals %%
+%% ========= %%
 
 init(Mod, Args) ->
     {ok, Options} = apply(Mod, init, Args),
