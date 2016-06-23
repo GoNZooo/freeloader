@@ -25,25 +25,25 @@ Usage
 Since it is a behaviour, you can specify that your new module
 uses it (`-behaviour(freeloader_downloader).`) and define `init/2`:
 
-```
+```erlang
 init(Args) when is_list(Args) ->
     {ok, Opts}.
 ```
 
 `Opts` in the above tuple is an optionlist which can contain the following:
 
-- `{url, Url}` where `Url` is a `string() "http://example.com/"`
+- `{url, Url}` where `Url` is a `string()` like `"http://example.com/"`
 - `{type, Type}` where `Type` is either of atoms `string` or `binary`
 - `{parse_fun, ParseFun}` where `ParseFun` is a
   `fun((string() | binary()) -> term())`
 - `{timeout, Timeout}` where `Timeout` is a
-  `timeout() (non_neg_integer() or the atom infinite)`
+  `timeout()` (`non_neg_integer()` or the atom `infinite`)
 - `{http_options, HTTPOpts}` where `HTTPOpts` is a list of `httpc:http_options()`
 
 Example module
 --------------
 
-```
+```erlang
 -module(freeloader_example).
 
 -behavior(freeloader_downloader).
