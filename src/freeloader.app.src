@@ -1,7 +1,7 @@
 {application, freeloader,
  [{description, "A behaviour for HTTP downloads"},
   {vsn, "0.1.0"},
-  {registered, [freeloader_downloader]},
+  {registered, []},
   {applications,
    [kernel,
     stdlib,
