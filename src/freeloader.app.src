@@ -8,7 +8,7 @@
     inets
    ]},
   {env,[]},
-  {modules, []},
+  {modules, [freeloader_downloader]},
 
   {maintainers, []},
   {licenses, []},
