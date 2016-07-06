@@ -70,8 +70,14 @@ init(Mod, Args) ->
                Timeout :: timeout(), HTTPOpts :: http_options())
               -> {ok, reference(), any()} | none().
 download(Url, Type, ParseFun, Timeout, HTTPOpts) ->
-    {ok, {_, _, Result}} = httpc:request(get, {Url, []},
+    {ok, {_, Headers, Result0}} = httpc:request(get, {Url, []},
                                          HTTPOpts, [{body_format, Type}]),
+    Result = case is_gzipped(Headers) of
+                 true ->
+                     zlib:gunzip(Result0);
+                 false ->
+                     Result0
+             end,
     ParsedResult = ParseFun(Result),
 
     receive
@@ -80,6 +86,9 @@ download(Url, Type, ParseFun, Timeout, HTTPOpts) ->
     after Timeout ->
             exit(timeout)
     end.
+
+is_gzipped(Headers) ->
+    proplists:get_value("content-encoding", Headers) =:= "gzip".
 
 -spec get_url(Optlist :: options()) -> url().
 get_url(Optlist) ->
